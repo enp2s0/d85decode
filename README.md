@@ -29,6 +29,10 @@ Ready, waiting for data...
 217 | lat: -77.6678594, lon: 32.7787728, alt:   0m, dist:    0m, fm:          grounded, bat: 7.7V
 ```
 
+#### Drone Protocol
+
+See PROTOCOL.md for details on the communications structure and the protocol itself.
+
 #### License
 
 This software is released under the MIT license.
