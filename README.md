@@ -6,7 +6,7 @@
 
 `python3 main.py` will start the program. Use `-h` or `--help` to see the command line options:
 
-```python3 main.py -h
+```
 usage: main.py [-h] [--ip IP] [--port PORT] [--recvbuf RECVBUF]
 
 Decode and display data from a Potensic d85 drone.
@@ -22,7 +22,7 @@ optional arguments:
 
 This is the output of a drone just before launch. The leading number is the packet ID. `lat` and `lon` are GPS coordinates. `alt` and `dist` are the height and distance relative to the takeoff point. `fm` is the "flight mode" of the drone, and `bat` is the current battery voltage.
 
-```python3 main.py
+```
 Ready, waiting for data...
 215 | lat: -77.6678616, lon: 32.7787690, alt:   0m, dist:    0m, fm:          grounded, bat: 7.7V
 216 | lat: -77.6678606, lon: 32.7787707, alt:   0m, dist:    0m, fm:          grounded, bat: 7.7V
