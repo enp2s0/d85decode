@@ -18,7 +18,15 @@ The drone sends status messages periodically, as well as every time a picture or
 
 There are 3 sentences I have seen so far. A "Drone Status Sentence" is sent periodically (about 2 per second). A "Camera Status Sentence" is sent whenever a picture is taken by the drone's camera, and a "Video Status Sentence" is sent every time the video recorder is started or stopped.
 
-##### Drone Status Sentence Format
+Byte 14 appears to be the sentence type. Here is the type table:
+
+| ID     | Sentence Type          |
+| ------ | ---------------------- |
+| `0x1A` | Drone Status Sentence  |
+| `0x41` | Camera Status Sentence |
+| `0x43` | Video Status Sentence  |
+
+##### Drone Status Sentence
 
 This is the most interesting sentence and contains most of the information pilots will care about, such as location, altitude, and GPS statistics. A typical sentence looks like this:
 
@@ -31,7 +39,7 @@ Here is the structure of this sentence.
 | `00-03` | `bytes`           | Signature bytes. All sentences start with the same signature. |
 | `04`    | `char`            | Sentence length in bytes.                                    |
 | `07`    | `char`            | Packet ID. Counts up from 0 to 255 and rolls over. Useful for detecting dropped packets. |
-| `08`    | `char`            | Sentence type. Always `0xD0` for Drone Status Sentences      |
+| `14`    | `char`            | Sentence type. Always `0x1A` for Drone Status Sentences      |
 | `16-19` | `int`             | GPS latitude. Divide by `10000000` to convert to decimal degrees. |
 | `20-23` | `int`             | GPS longitude. Divide by `10000000` to convert to decimal degrees. |
 | `24-25` | `short`           | Altitude in meters, relative to takeoff point.               |
