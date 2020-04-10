@@ -26,8 +26,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.setblocking(0)
 sock.bind((args.ip, args.port))
 
-SSP = sentences.DroneStatusSentenceProcessor()
-CSP = sentences.CameraStatusSentenceProcessor()
+DSP = sentences.DroneSentenceProcessor()
 
 print("Ready, waiting for data...")
 
@@ -35,38 +34,15 @@ print("Ready, waiting for data...")
 while True:
 	try:
 		sentence, drone_addr = sock.recvfrom(args.recvbuf)
-
 		# Only listen to packets sent by the drone.
 		if drone_addr[0] == args.drone:
 			# Decode basic data common to all sentences.
-			msg_len = int(sentence[4])
-			msg_id = int(sentence[7])
-			msg_type = int(sentence[14])
-
-			if msg_len == 0: # This should never happen, but if it does, catch it before trying to decode it.
-				print("Error: empty sentence received.")
-			elif msg_type == 0x1A: # Drone Status Sentence, sent periodically (seems to be about 2/sec)
-				SSP.feed(sentence = sentence)
-				SSP.print_pretty()
-				SSP.clear()
-			elif msg_type == 0x41: # Camera Status Sentence, sent when a picture is taken
-				CSP.feed(is_video = False, sentence = sentence)
-				CSP.print_pretty()
-				CSP.clear()
-			elif msg_type == 0x43: # Video Status Sentence, sent when a video is started or ended.
-				CSP.feed(is_video = True, sentence = sentence)
-				CSP.print_pretty()
-				CSP.clear()
-			elif msg_type == 0x05: # Mode Update Sentence, sometimes sent when the flight mode is changed.
-				# These sentences appear to be meaningless. Only show them if --all is specified.
-				if args.all:
-					print(f"{msg_id:3} | Mode Update Sentence")
-			else: # Print some basic information if we get an unsupported sentence.
-				print(f"{msg_id:3} | Unknown sentence:  type: {msg_type:2x}, len: {msg_len:4}")
-
+			DSP.feed(sentence)
 	# If there is no data available...
 	except BlockingIOError:
 		# Sleep to lower CPU load. Without sleep(), the program ties up an entire
 		# core throwing BlockingIOError as fast as it can, over and over again.
 		# args.refresh is in milliseconds, sleep() takes seconds.
 		time.sleep(args.refresh / 1000.0)
+
+	DSP.print_pretty()
