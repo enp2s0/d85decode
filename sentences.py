@@ -54,13 +54,20 @@ class DroneStatusSentenceProcessor:
 	def print_pretty(self):
 		# Print one line of status information.
 		if self.has_data:
-			print(f"{self.packet_id:3} | lat: {self.latitude:3.7f}, lon: {self.longitude:3.7f}, alt: {self.altitude:3}m, dist: {self.distance:4}m, fm: {self.flight_mode_str():17}, bat: {self.voltage}V")
+			print(f"{self.packet_id:3} | lat: {self.latitude:3.7f}, lon: {self.longitude:3.7f}, alt: {self.altitude:3}m, dist: {self.distance:4}m, fm: {self.flight_mode_str():17}, bat: {self.voltage}V, fix: {self.gps_fix_count:2}")
 		else:
 			print("No data available!")
+
+	def has_new_data(self):
+		return self.has_data
+
+	def clear(self):
+		self.has_data = False
 
 class CameraStatusSentenceProcessor():
 	# Decodes and prints Camera sentences. Handles both photo and video sentences.
 	status = ""
+	has_data = False
 
 	def __init__(self, is_video = False, sentence=None):
 		# Parse the sentence if we got one.
@@ -72,6 +79,7 @@ class CameraStatusSentenceProcessor():
 		# string field describing the operation.
 		self.packet_id = int(sentence[7])
 		self.status = str(sentence [12:].decode("utf-8"))
+		self.has_data = True
 
 	def print_pretty(self):
 		# TODO: handle any error codes that we might receive.
@@ -91,3 +99,9 @@ class CameraStatusSentenceProcessor():
 			print(f"{self.packet_id:3} | Record OK.")
 		else:
 			print("Camera status unknown!")
+
+	def has_new_data(self):
+		return self.has_data
+
+	def clear(self):
+		self.has_data = False
