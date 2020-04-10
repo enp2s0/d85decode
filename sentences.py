@@ -49,6 +49,10 @@ class DroneStatusSentenceProcessor:
 			return "    manual flight"
 		if self.flight_mode == 2:
 			return "gps-assist flight"
+		if self.flight_mode == 3:
+			return "   return-to-home"
+		if self.flight_mode == 5:
+			return "         orbiting"
 		return f"unknown: {self.flight_mode}"
 
 	def print_pretty(self):

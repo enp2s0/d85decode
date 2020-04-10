@@ -16,7 +16,7 @@ The video stream is a simple RTSP feed. It is trivial to connect to it via VLC o
 
 The drone sends status messages periodically, as well as every time a picture or video is taken. In the script and here I refer to each message as a "sentence". Sentences are sent via UDP broadcast on port `8001`.
 
-There are 3 sentences I have seen so far. A "Drone Status Sentence" is sent periodically (about 2 per second). A "Camera Status Sentence" is sent whenever a picture is taken by the drone's camera, and a "Video Status Sentence" is sent every time the video recorder is started or stopped.
+There are 4 sentences I have seen so far. A "Drone Status Sentence" is sent periodically (about 2 per second). A "Camera Status Sentence" is sent whenever a picture is taken by the drone's camera, and a "Video Status Sentence" is sent every time the video recorder is started or stopped. A "Mode Update Sentence" is sent whenever the drone is put into an autonomous mode, such as "Follow Me" or "Orbit Point." This sentence appears to be redundant as the mode change is also visible in the "Drone Status Sentence."
 
 Byte 14 appears to be the sentence type. Here is the type table:
 
@@ -25,6 +25,7 @@ Byte 14 appears to be the sentence type. Here is the type table:
 | `0x1A` | Drone Status Sentence  |
 | `0x41` | Camera Status Sentence |
 | `0x43` | Video Status Sentence  |
+| `0x05` | Mode Update Sentence   |
 
 ##### Drone Status Sentence
 
@@ -60,4 +61,7 @@ And here is the flight mode table (at least so far, there could be more modes):
 | `00`        | The drone is on the ground and the propellers are off.     |
 | `01`        | The drone is flying without GPS assistance.                |
 | `02`        | The drone is flying and using GPS to counteract wind, etc. |
+| `03`        | The drone is returning to the takeoff point.               |
+| `04`        | The drone is following the controller (follow-me mode).    |
+| `05`        | The drone is orbiting.                                     |
 
