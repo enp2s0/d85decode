@@ -15,6 +15,8 @@ class DroneSentenceProcessor:
 	status1 = -1
 	control_signal = -1
 
+	alt_flight_mode = ""
+
 	camera_status = ""
 
 	has_data = False
@@ -35,28 +37,52 @@ class DroneSentenceProcessor:
 
 			pass
 		elif msg_type == 1:
-			print(f"{self.last_packet_id} | " + self.decodeStatusSentence(sentence))
+			print(f"{self.last_packet_id:3} | " + self.decodeStatusSentence(sentence))
 		elif msg_type == 2 or msg_type == 3:
 			print(f"{self.last_packet_id:3} | " + "Unsupported: SetParam")
-		elif msg_type == 4 or msg_type == 5:
-			print(f"{self.last_packet_id:3} | " + "Unsupported: Follow")
-		elif msg_type == 6 or msg_type == 7:
-			print(f"{self.last_packet_id:3} | " + "Unsupported: Orbit")
-		elif msg_type == 8 or msg_type == 9:
-			print(f"{self.last_packet_id:3} | " + "Unsupported: GuidedMode")
+		elif msg_type == 4:
+			if self.alt_flight_mode == "":
+				self.alt_flight_mode = "following"
+				print(f"{self.last_packet_id} | Follow mode activated.")
+		elif msg_type == 5:
+			if self.alt_flight_mode == "following":
+				self.alt_flight_mode = ""
+				print(f"{self.last_packet_id} | Follow mode deactivated.")
+		elif msg_type == 6:
+			if self.alt_flight_mode == "":
+				self.alt_flight_mode = "orbiting"
+				print(f"{self.last_packet_id} | Orbit mode activated.")
+		elif msg_type == 7:
+			if self.alt_flight_mode == "orbiting":
+				self.alt_flight_mode = ""
+				print(f"{self.last_packet_id} | Orbit mode deactivated.")
+		elif msg_type == 8:
+			if self.alt_flight_mode == "":
+				self.alt_flight_mode = "guided"
+				print(f"{self.last_packet_id} | Guided flight mode activated.")
+		elif msg_type == 9:
+			if self.alt_flight_mode == "guided":
+				self.alt_flight_mode = ""
+				print(f"{self.last_packet_id} | Guided flight mode deactivated.")
 		elif msg_type == 16:
 			print(f"{self.last_packet_id:3} | " + "Unsupported: Alt GuidedMode")
-		elif msg_type == 22 or msg_type == 23:
-			print(f"{self.last_packet_id:3} | " + "Unsupported: RTL")
+		elif msg_type == 22:
+			if self.alt_flight_mode == "":
+				self.alt_flight_mode = "rtl"
+				print(f"{self.last_packet_id} | Return-to-home activated.")
+		elif msg_type == 23:
+			if self.alt_flight_mode == "rtl":
+				self.alt_flight_mode = ""
+				print(f"{self.last_packet_id} | Return-to-home deactivated.")
 		elif msg_type == 24 or msg_type == 25:
-			# Camera or Video Status Sentence. The format of each is the same, so they're parsed together.
-			pass
+			print(f"{self.last_packet_id:3} | " + "Unsupported: Camera/Video")
 		elif msg_type == 26: # wifi switch
 			print(f"{self.last_packet_id:3} | " + "Unsupported: WiFi Switch")
 		elif msg_type == 69 or msg_type == 78:
 			# See PROTOCOL.md for why these exist and why they are abnormally large.
-			print(f"{self.last_packet_id} | " + self.decodeCameraSentence(sentence))
-		else: # Print some basic information if we get an unsupported sentence.
+			print(f"{self.last_packet_id:3} | " + self.decodeCameraSentence(sentence))
+		else:
+			# Print some basic information if we get an unsupported sentence.
 			print(f"{self.last_packet_id:3} | Unknown sentence: type: {msg_type:2x}, len: {msg_len:4}")
 
 	def decodeStatusSentence(self, sentence):
