@@ -40,9 +40,7 @@ while True:
 			DSP.feed(sentence)
 	# If there is no data available...
 	except BlockingIOError:
-		# Sleep to lower CPU load. Without sleep(), the program ties up an entire
+		# ...sleep to lower CPU load. Without sleep(), the program ties up an entire
 		# core throwing BlockingIOError as fast as it can, over and over again.
 		# args.refresh is in milliseconds, sleep() takes seconds.
 		time.sleep(args.refresh / 1000.0)
-
-	DSP.print_pretty()

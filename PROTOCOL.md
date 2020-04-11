@@ -18,14 +18,34 @@ The drone sends status messages periodically, as well as every time a picture or
 
 There are 4 sentences I have seen so far. A "Drone Status Sentence" is sent periodically (about 2 per second). A "Camera Status Sentence" is sent whenever a picture is taken by the drone's camera, and a "Video Status Sentence" is sent every time the video recorder is started or stopped. A "Mode Update Sentence" is sent whenever the drone is put into an autonomous mode, such as "Follow Me" or "Orbit Point." This sentence appears to be redundant as the mode change is also visible in the "Drone Status Sentence."
 
-Byte 14 appears to be the sentence type. Here is the type table:
+Byte 13 appears to be the sentence type. Here is the type table (question mark indicates unconfirmed entry, usually because it appeared in a disassembly but has never been seen in action):
 
-| ID     | Sentence Type          |
-| ------ | ---------------------- |
-| `0x1A` | Drone Status Sentence  |
-| `0x41` | Camera Status Sentence |
-| `0x43` | Video Status Sentence  |
-| `0x05` | Mode Update Sentence   |
+| ID      | Sentence Type                    |
+| ------- | -------------------------------- |
+| `00`    | Control Message (?)              |
+| `01`    | Drone Status Sentence            |
+| `02-03` | Set Parameter Sentence (?)       |
+| `04-05` | Follow Mode Sentence             |
+| `06-07` | Orbit Mode Sentence              |
+| `08-09` | Guided Mode Sentence (?)         |
+| `16`    | Alternate Guided Mode Sentence   |
+| `22-23` | RTL Sentence (?)                 |
+| `24`    | Photo Sentence (?)               |
+| `25`    | Video Sentence (?)               |
+| `26`    | WiFi Switch Channel Sentence (?) |
+| `69`    | Video Sentence                   |
+| `78`    | Camera Sentence                  |
+
+The double entries (such as `02-03`) are on-off pairs; the first message is sent when a feature is enabled and the second message is sent when it is disabled.
+
+All sentences begin with a header. The structure of this header is as follows:
+
+| Address | C-style Data Type | Description                                                  |
+| ------- | ----------------- | ------------------------------------------------------------ |
+| `00-03` | `char[4]`         | Signature. All sentences start with the following 4 bytes: `5b 52 74 3e`. This can be used to identify the start of messages. |
+| `04`    | `char`            | Sentence length. Does not include the most of the header, but does include the sentence type byte. |
+| `07`    | `char`            | Packet ID. Counts from `0x00` to `0xff` and rolls over. Can be used to detect dropped packets. |
+| `13`    | `char`            | Sentence type. Refer to the Sentence ID table above to decode this value. |
 
 ##### Drone Status Sentence
 
@@ -37,10 +57,7 @@ Here is the structure of this sentence.
 
 | Address | C-style Data Type | Description                                                  |
 | ------- | ----------------- | ------------------------------------------------------------ |
-| `00-03` | `bytes`           | Signature bytes. All sentences start with the same signature. |
-| `04`    | `char`            | Sentence length in bytes.                                    |
-| `07`    | `char`            | Packet ID. Counts up from 0 to 255 and rolls over. Useful for detecting dropped packets. |
-| `14`    | `char`            | Sentence type. Always `0x1A` for Drone Status Sentences      |
+| `00-13` | `bytes`           | Header. See the header table to decode this section.         |
 | `16-19` | `int`             | GPS latitude. Divide by `10000000` to convert to decimal degrees. |
 | `20-23` | `int`             | GPS longitude. Divide by `10000000` to convert to decimal degrees. |
 | `24-25` | `short`           | Altitude in meters, relative to takeoff point.               |
@@ -65,3 +82,13 @@ And here is the flight mode table (at least so far, there could be more modes):
 | `04`        | The drone is following the controller (follow-me mode).    |
 | `05`        | The drone is orbiting.                                     |
 
+##### Camera/Video Sentences
+
+These sentences are sent when the Camera button is pressed on the stick controller. Pressing the button takes a photo and triggers sentence `78`, and holding the button starts or stops video recording and triggers sentence `69`. The structure of these sentences are as follows:
+
+| Address  | C-style Data Type | Description                                                  |
+| -------- | ----------------- | ------------------------------------------------------------ |
+| `00-13`  | `bytes`           | Header. See the header table to decode this section.         |
+| `12-end` | `const char*`     | Message. Contains either `SNAP_OK` (for photos) or `REC_OK` (for videos). |
+
+If you realized that there is some overlap between the header and the message, you're right! These two sentences are abnormal in that the last two bytes of the header are overwritten by the payload. If you look at these sentences' entries in the sentence type table, you'll find that they are significantly higher than the rest of the IDs. This is because they are actually ASCII encodings of the letter in the payload that gets written to the ID location (`69` is ASCII `E` and `78` is ASCII `N`, both are the second letters of the respective sentences as the first two bytes of the payload overwrite the last two bytes of header.)

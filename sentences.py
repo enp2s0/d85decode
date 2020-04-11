@@ -26,20 +26,38 @@ class DroneSentenceProcessor:
 		# Decode basic data common to all sentences.
 		msg_len = int(sentence[4])
 		self.last_packet_id = int(sentence[7])
-		msg_type = int(sentence[14])
+		msg_type = int(sentence[13])
 
-		if msg_len == 0: # This should never happen, but if it does, catch it before trying to decode it.
+		if msg_len == 0:
+			# This should never happen, but if it does, catch it before trying to decode it.
 			print("Error: empty sentence received.")
-		elif msg_type == 0x1A: # Drone Status Sentence, sent periodically (seems to be about 2/sec)
-			self.decodeStatusSentence(sentence)
-		elif msg_type == 0x41: # Camera Status Sentence, sent when a picture is taken
-			self.decodeCameraSentence(sentence)
-		elif msg_type == 0x43: # Video Status Sentence, sent when a video is started or ended.
-			self.decodeCameraSentence(sentence)
-		elif msg_type == 0x05: # Mode Update Sentence, sometimes sent when the flight mode is changed.
-			self.decodeModeUpdateSentence(sentence)
+		elif msg_type == 0:
+
+			pass
+		elif msg_type == 1:
+			print(f"{self.last_packet_id} | " + self.decodeStatusSentence(sentence))
+		elif msg_type == 2 or msg_type == 3:
+			print(f"{self.last_packet_id:3} | " + "Unsupported: SetParam")
+		elif msg_type == 4 or msg_type == 5:
+			print(f"{self.last_packet_id:3} | " + "Unsupported: Follow")
+		elif msg_type == 6 or msg_type == 7:
+			print(f"{self.last_packet_id:3} | " + "Unsupported: Orbit")
+		elif msg_type == 8 or msg_type == 9:
+			print(f"{self.last_packet_id:3} | " + "Unsupported: GuidedMode")
+		elif msg_type == 16:
+			print(f"{self.last_packet_id:3} | " + "Unsupported: Alt GuidedMode")
+		elif msg_type == 22 or msg_type == 23:
+			print(f"{self.last_packet_id:3} | " + "Unsupported: RTL")
+		elif msg_type == 24 or msg_type == 25:
+			# Camera or Video Status Sentence. The format of each is the same, so they're parsed together.
+			pass
+		elif msg_type == 26: # wifi switch
+			print(f"{self.last_packet_id:3} | " + "Unsupported: WiFi Switch")
+		elif msg_type == 69 or msg_type == 78:
+			# See PROTOCOL.md for why these exist and why they are abnormally large.
+			print(f"{self.last_packet_id} | " + self.decodeCameraSentence(sentence))
 		else: # Print some basic information if we get an unsupported sentence.
-			print(f"{msg_id:3} | Unknown sentence:  type: {msg_type:2x}, len: {msg_len:4}")
+			print(f"{self.last_packet_id:3} | Unknown sentence: type: {msg_type:2x}, len: {msg_len:4}")
 
 	def decodeStatusSentence(self, sentence):
 		# I got these byte locations through trial-and-error and reverse
@@ -58,6 +76,7 @@ class DroneSentenceProcessor:
 		self.status1 = int(sentence[36])
 		self.control_signal = int(sentence[37])
 		self.has_data = True
+		return f"lat: {self.latitude:3.7f}, lon: {self.longitude:3.7f}, alt: {self.altitude:3}m, dist: {self.distance:4}m, fm: {self.flight_mode_str():17}, bat: {self.voltage}V, fix: {self.gps_fix_count:2}"
 
 	def decodeCameraSentence(self, sentence):
 		# Decode the sentence. These sentences are pretty simple, with just a
@@ -75,21 +94,13 @@ class DroneSentenceProcessor:
 		# could cause desyncs if we lose packets, which is very possible when
 		# using UDP over a wireless link to a drone).
 		if self.camera_status == "": # This should never happen.
-			print("No data available!")
+			return "No data available!"
 		elif self.camera_status == "SNAP_OK": # Received when the drone successfully takes a picture.
-			print(f"{self.last_packet_id:3} | Picture OK.")
+			return "Picture OK."
 		elif self.camera_status == "REC_OK": # Received when the drone starts or ends a video.
-			print(f"{self.last_packet_id:3} | Record OK.")
+			return "Record OK."
 		else:
-			print("Camera status unknown!")
-
-	def decodeModeUpdateSentence(self, sentence):
-		# I have yet to find anything useful in this sentence. It seems to be sent
-		# whenever you enable certian flight modes, but it doesn't seem to be
-		# useful in any way.
-		#
-		# Interestingly, these messages always come in groups of 3.
-		pass
+			return "Camera status unknown!"
 
 	def flight_mode_str(self):
 		# Convert the flight_mode variable to a descriptive string.
@@ -104,10 +115,3 @@ class DroneSentenceProcessor:
 		if self.flight_mode == 5:
 			return "         orbiting"
 		return f"unknown: {self.flight_mode}"
-
-	def print_pretty(self):
-		# Print one line of status information.
-		if self.has_data:
-			print(f"lat: {self.latitude:3.7f}, lon: {self.longitude:3.7f}, alt: {self.altitude:3}m, dist: {self.distance:4}m, fm: {self.flight_mode_str():17}, bat: {self.voltage}V, fix: {self.gps_fix_count:2}")
-		else:
-			print("No data available!")
