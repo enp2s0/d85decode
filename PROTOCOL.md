@@ -16,7 +16,7 @@ The video stream is a simple RTSP feed. It is trivial to connect to it via VLC o
 
 The drone sends status messages periodically, as well as every time a picture or video is taken. In the script and here I refer to each message as a "sentence". Sentences are sent via UDP broadcast on port `8001`.
 
-There are 4 sentences I have seen so far. A "Drone Status Sentence" is sent periodically (about 2 per second). A "Camera Status Sentence" is sent whenever a picture is taken by the drone's camera, and a "Video Status Sentence" is sent every time the video recorder is started or stopped. A "Mode Update Sentence" is sent whenever the drone is put into an autonomous mode, such as "Follow Me" or "Orbit Point." This sentence appears to be redundant as the mode change is also visible in the "Drone Status Sentence."
+There are 4 sentences I have seen so far. A "Drone Status Sentence" is sent periodically (about 2 per second). A "Camera Status Sentence" is sent whenever a picture is taken by the drone's camera, and a "Video Status Sentence" is sent every time the video recorder is started or stopped. Other sentences are sent when certain features are activated or deactivated.
 
 Byte 13 appears to be the sentence type. Here is the type table (question mark indicates unconfirmed entry, usually because it appeared in a disassembly but has never been seen in action):
 
